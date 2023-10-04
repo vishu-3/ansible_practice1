@@ -1,4 +1,13 @@
 #vishal@192.168.0.22
-vishal@192.168.0.40 apache_package=apache2 php_package=libapache2-mod-php
-root@192.168.0.11   apache_package=httpd  php_package=php
+[web_servers]
+vishal@192.168.0.41 
+   
+
+[db_servers]
+root@192.168.0.12 
+
+
+[file_servers]
+vishal@192.168.0.42 
+root@192.168.0.13 
 
