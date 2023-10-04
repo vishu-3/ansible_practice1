@@ -1,0 +1,141 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: install updates(Ubuntu)
+    tags: always
+    apt:
+      update_cache: yes
+    when: ansible_distribution == "Ubuntu"
+
+  - name: install updates(CentOS)
+    tags: always
+    yum:
+      update_only: yes
+      update_cache: yes
+    when: ansible_distribution == "CentOS"
+
+- hosts: all
+  become: true
+  tasks:
+
+  - name: create user ranveer
+    tags: adduser
+    user:
+      name: ranveer
+#      groups: guest
+
+- hosts: workstations
+  become: true
+  tasks:
+
+  - name: install unzip package
+    tags: unzip
+    package:
+     name: unzip
+     state: latest
+
+  - name: install terraform
+    tags: terraform
+    unarchive:
+      src: https://releases.hashicorp.com/terraform/0.12.28/terraform_0.12.28_linux_amd64.zip
+      dest: /usr/local/bin
+      remote_src: yes
+      mode: 0755
+      owner: root
+      group: root
+
+- hosts: web_servers
+  become: true
+  tasks:
+
+  - name: install apache2 ,php and update packages for ubuntu
+    tags: apache,apache2,ubuntu
+    apt:
+     name:
+       -  apache2
+       -  libapache2-mod-php
+     state: latest
+    # state: absent
+    when: ansible_distribution == "Ubuntu"
+   # when: ansible_distribution in [ "Ubuntu","Debian"]
+
+  - name: install apache & php package for CentOS
+    tags: apache,httpd,centos
+    yum:
+     name:
+       -  httpd
+       -  php
+     state: latest
+    when: ansible_distribution == "CentOS"
+
+  - name: start httpd (CentOS)
+    tags: httpd-manage
+    service:
+     name: httpd
+     state: started
+     enabled: yes
+    when: ansible_distribution == "CentOS"
+
+  - name: change e-mail for admin (CentOS)
+    tags: httpd-manage
+    lineinfile:
+     path: /etc/httpd/conf/httpd.conf
+     regexp: '^ServerAdmin'
+     line: ServerAdmin someone@somewhere.net
+    when: ansible_distribution == "CentOS"
+    register: httpd
+
+  - name: restart httpd (CentOS)
+    tags: httpd-manage
+    service:
+     name: httpd
+     state: restarted
+    when: httpd.changed
+
+  - name: copy default html file for site
+    tags: filecopy
+    copy:
+      src: default_site.html
+      dest: /var/www/html/index.html
+      owner: root
+      group: root
+      mode: 0644
+
+- hosts: db_servers
+  become: true
+  tasks:
+
+  - name: install mariadb packages for ubuntu
+    tags: db,mariadb,ubuntu
+    apt:
+     name:
+       -  mariadb-server
+     state: latest
+    # state: absent
+    when: ansible_distribution == "Ubuntu"
+   # when: ansible_distribution in [ "Ubuntu","Debian"]
+
+  - name: install mariadb package for CentOS
+    tags: db,mariadb,centos
+    yum:
+     name:
+       -  mariadb
+     state: latest
+    # state: absent
+    when: ansible_distribution == "CentOS"
+   # when: ansible_distribution in [ "Ubuntu","Debian"]
+
+
+- hosts: file_servers
+  become: true
+  tasks:
+
+  - name: install samba package
+    tags: file,samba
+    package:
+     name:
+       -  samba
+     state: latest
