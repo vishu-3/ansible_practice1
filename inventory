@@ -1,6 +1,7 @@
 #vishal@192.168.0.22
 [web_servers]
 vishal@192.168.0.41 
+root@192.168.0.12 
    
 
 [db_servers]
